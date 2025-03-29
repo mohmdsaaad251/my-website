@@ -1,139 +1,41 @@
-import React, { useState, useEffect } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { useToast } from "@/components/ui/toast";
-
-const stocksData = [
-  {
-    name: { ar: "شركة أ", en: "Company A" },
-    country: "السعودية",
-    sector: "البنوك",
-    halal: true,
-    report: {
-      complianceRatio: "95%",
-      financialRatios: {
-        debtToAssets: "20%",
-        interestIncome: "2%",
-      },
-      recentChanges: "تم تعديل نموذج العمل لزيادة الالتزام بالضوابط الشرعية.",
-      fatwas: "تم التحقق من توافق الشركة مع المعايير الشرعية من قبل هيئة XYZ.",
-      recommendation: "السهم متوافق مع الشريعة الإسلامية ولا يحتاج إلى تنقية الأرباح."
-    }
-  },
-  {
-    name: { ar: "شركة ب", en: "Company B" },
-    country: "الإمارات",
-    sector: "التكنولوجيا",
-    halal: false,
-    report: {
-      complianceRatio: "60%",
-      financialRatios: {
-        debtToAssets: "50%",
-        interestIncome: "15%",
-      },
-      recentChanges: "الشركة زادت من استثماراتها في قطاعات غير متوافقة مع الشريعة.",
-      fatwas: "غير متوافق بناءً على معايير ABC.",
-      recommendation: "لا يُنصح بالاستثمار في هذا السهم وفقًا للضوابط الشرعية."
-    }
-  }
-];
-
-export default function IslamicStocks() {
-  const [query, setQuery] = useState("");
-  const [onlyHalal, setOnlyHalal] = useState(false);
-  const [language, setLanguage] = useState("ar");
-  const [trialExpired, setTrialExpired] = useState(false);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    const trialStart = localStorage.getItem("trialStart");
-    if (!trialStart) {
-      localStorage.setItem("trialStart", Date.now());
-    } else {
-      const elapsed = Date.now() - parseInt(trialStart, 10);
-      if (elapsed > 7 * 24 * 60 * 60 * 1000) {
-        setTrialExpired(true);
-      }
-    }
-  }, []);
-
-  const filteredStocks = stocksData.filter(stock =>
-    stock.name[language].includes(query) && (!onlyHalal || stock.halal)
-  );
-
-  const handleSubscription = () => {
-    toast({
-      title: "الاشتراك مطلوب!",
-      description: "يرجى الدفع عبر فودافون كاش إلى الرقم 01096502677 لتفعيل الحساب.",
-    });
-  };
-
-  const showReport = (stock) => {
-    toast({
-      title: stock.name[language],
-      description: `\n- نسبة التوافق: ${stock.report.complianceRatio}\n- نسبة الديون إلى الأصول: ${stock.report.financialRatios.debtToAssets}\n- نسبة الفوائد: ${stock.report.financialRatios.interestIncome}\n- التغيرات الأخيرة: ${stock.report.recentChanges}\n- الفتاوى والمراجع: ${stock.report.fatwas}\n- التوصية النهائية: ${stock.report.recommendation}`
-    });
-  };
-
-  if (trialExpired) {
-    return (
-      <div className="p-6 text-center">
-        <h2 className="text-xl font-bold">انتهت فترة التجربة المجانية</h2>
-        <p>للاستمرار في استخدام الموقع، يرجى الاشتراك عبر فودافون كاش.</p>
-        <Button onClick={handleSubscription} className="mt-4">اشترك الآن</Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className="p-6">
-      <Card>
-        <CardContent className="p-4 flex flex-col gap-4">
-          <div className="flex justify-between">
-            <Input
-              placeholder={language === "ar" ? "ابحث عن الأسهم الإسلامية..." : "Search for Islamic stocks..."}
-              value={query}
-              onChange={e => setQuery(e.target.value)}
-            />
-            <Button onClick={() => setLanguage(language === "ar" ? "en" : "ar")}>
-              {language === "ar" ? "English" : "العربية"}
-            </Button>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={onlyHalal} onCheckedChange={setOnlyHalal} />
-            <span>{language === "ar" ? "عرض الأسهم المتوافقة مع الشريعة فقط" : "Show only Shariah-compliant stocks"}</span>
-          </div>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>{language === "ar" ? "اسم الشركة" : "Company Name"}</TableHead>
-                <TableHead>{language === "ar" ? "الدولة" : "Country"}</TableHead>
-                <TableHead>{language === "ar" ? "القطاع" : "Sector"}</TableHead>
-                <TableHead>{language === "ar" ? "متوافقة؟" : "Compliant?"}</TableHead>
-                <TableHead>{language === "ar" ? "تقرير" : "Report"}</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredStocks.map((stock, index) => (
-                <TableRow key={index}>
-                  <TableCell>{stock.name[language]}</TableCell>
-                  <TableCell>{stock.country}</TableCell>
-                  <TableCell>{stock.sector}</TableCell>
-                  <TableCell>{stock.halal ? "✔" : "✖"}</TableCell>
-                  <TableCell>
-                    <Button onClick={() => showReport(stock)}>
-                      {language === "ar" ? "عرض التقرير" : "View Report"}
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ساعة رقمية</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #222;
+            color: #fff;
+            font-family: Arial, sans-serif;
+        }
+        .clock {
+            font-size: 50px;
+            font-weight: bold;
+            background: #000;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.5);
+        }
+    </style>
+</head>
+<body>
+    <div class="clock" id="clock"></div>
+    <script>
+        function updateClock() {
+            let now = new Date();
+            let hours = now.getHours().toString().padStart(2, '0');
+            let minutes = now.getMinutes().toString().padStart(2, '0');
+            let seconds = now.getSeconds().toString().padStart(2, '0');
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+    </script>
+</body>
+</html>
